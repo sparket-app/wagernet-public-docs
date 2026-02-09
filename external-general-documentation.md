@@ -129,6 +129,7 @@ GET /api/v1/events/{id}             → single event with full details
 | Parameter | Description | Example |
 |-----------|-------------|---------|
 | `discipline` | Filter by discipline URI | `jai-alai` |
+| `type` | Filter by event type | `match` |
 | `status` | Filter by event status | `upcoming` |
 | `stage` | Filter by stage URI | `wjal-fall-2025-regular` |
 
