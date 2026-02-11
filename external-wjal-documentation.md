@@ -1,6 +1,6 @@
 # WJAL Data Model in WagerNet
 
-How World Jai-Alai League (Battle Court at JAM Arena, Miami) data maps into WagerNet. No odds are provided by WJAL — events have empty `markets[]`.
+How World Jai-Alai League (Battle Court at JAM Arena, Miami) data maps into WagerNet.
 
 See [General Documentation](external-general-documentation.md) for general WagerNet API documentation.
 
@@ -11,7 +11,7 @@ See [General Documentation](external-general-documentation.md) for general Wager
 ```
 Discipline: jai-alai
 └── Competition: wjal
-    └── Season: wjal-fall-2025
+    └── Season: wjal-spring-2026
         ├── Stage: Regular Season
         ├── Stage: Playoffs
         └── Stage: Championship
@@ -35,10 +35,10 @@ Discipline: jai-alai
 curl "https://bf3zb3ipuy.us-east-1.awsapprunner.com/api/v1/events?discipline=jai-alai"
 
 # Season stages
-curl "https://bf3zb3ipuy.us-east-1.awsapprunner.com/api/v1/seasons/wjal-fall-2025/stages"
+curl "https://bf3zb3ipuy.us-east-1.awsapprunner.com/api/v1/seasons/wjal-spring-2026/stages"
 
 # Team rosters (players + pairs)
-curl "https://bf3zb3ipuy.us-east-1.awsapprunner.com/api/v1/seasons/wjal-fall-2025/entities"
+curl "https://bf3zb3ipuy.us-east-1.awsapprunner.com/api/v1/seasons/wjal-spring-2026/entities"
 ```
 
 ---
@@ -89,18 +89,76 @@ All WJAL entities use a `wjal-` prefix for global uniqueness:
 
 ---
 
+## Divisions & Rankings
+
+Each season, WJAL assigns every player and pair a **division** (matchup slot) and **rank** (strength rating):
+
+- **Division** — determines who plays whom. Same-division players from different teams face each other. Singles have divisions 1-5, doubles have divisions 1-6.
+- **Ranking** — skill rating within a division across all 6 teams. 1 = strongest, 6 = weakest.
+
+Division and ranking are available on the entities endpoint:
+
+```bash
+curl "https://bf3zb3ipuy.us-east-1.awsapprunner.com/api/v1/seasons/wjal-spring-2026/entities"
+```
+
+Each team member has `division` and `ranking` fields:
+
+```json
+{
+  "entity": { "uri": "wjal-goixerri-40", "type": "player", "name": "Goixerri" },
+  "division": 1,
+  "ranking": 1
+}
+```
+
+---
+
+## Moneyline Markets & Odds
+
+Both match and performance events have moneyline (winner) markets with decimal odds derived from power rankings.
+
+**Match events** — odds are based on the strength of each competitor:
+
+```
+strength = 7 - rank
+P(home wins) = strength_home / (strength_home + strength_away)
+decimal_odds = 1 / probability
+```
+
+**Performance events** — odds reflect the probability of a team winning a majority of matches (4+ out of 6). Calculated by combining all individual match probabilities.
+
+Example odds:
+
+| Matchup | Home Odds | Away Odds |
+|---------|-----------|-----------|
+| Rank 1 vs Rank 6 | 1.17 | 7.00 |
+| Rank 2 vs Rank 4 | 1.40 | 3.50 |
+| Rank 3 vs Rank 3 | 2.00 | 2.00 |
+
+---
+
 ## Example: Performance Event
 
 ```json
 {
   "id": "de72ff88-...",
-  "name": "Chargers vs Devils - 2025-11-19",
-  "start_date": "2025-11-19T17:00:00Z",
+  "name": "Chargers vs Devils - 2026-02-13",
+  "start_date": "2026-02-13T19:00:00Z",
   "status": "completed",
   "event_type": "performance",
   "competitors": [
     { "entity": { "uri": "wjal-chargers", "type": "team", "name": "Chargers" }, "role": "home" },
     { "entity": { "uri": "wjal-devils", "type": "team", "name": "Devils" }, "role": "away" }
+  ],
+  "markets": [
+    {
+      "type": "moneyline",
+      "selections": [
+        { "outcome": "Chargers", "odds_decimal": 1.49 },
+        { "outcome": "Devils", "odds_decimal": 3.03 }
+      ]
+    }
   ],
   "child_events": [
     { "id": "b13b07f6-...", "name": "Match 1 (Doubles): Chargers vs Devils", "event_type": "match", "status": "completed" },
@@ -141,6 +199,15 @@ All WJAL entities use a `wjal-` prefix for global uniqueness:
         ]
       },
       "role": "away"
+    }
+  ],
+  "markets": [
+    {
+      "type": "moneyline",
+      "selections": [
+        { "outcome": "Iturbide & Ubilla", "odds_decimal": 1.75 },
+        { "outcome": "Benny & Etcheberry", "odds_decimal": 2.33 }
+      ]
     }
   ],
   "metadata": { "match_number": 1, "match_type": "D" }
