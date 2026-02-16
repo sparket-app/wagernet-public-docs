@@ -126,9 +126,9 @@ P(home wins) = strength_home / (strength_home + strength_away)
 decimal_odds = 1 / probability
 ```
 
-**Performance events** — odds reflect the probability of a team winning a majority of matches (4+ out of 6). Calculated by combining all individual match probabilities.
+**Performance events** — odds reflect the probability of a team winning a majority of matches (4+ out of 6). Calculated by combining all individual match probabilities. When the match count is even (regular season: 6 matches), a **Draw** selection is included for the 3-3 tie scenario. Playoffs (7 matches) have no draw.
 
-Example odds:
+Example match odds:
 
 | Matchup | Home Odds | Away Odds |
 |---------|-----------|-----------|
@@ -156,7 +156,8 @@ Example odds:
       "type": "moneyline",
       "selections": [
         { "outcome": "Chargers", "odds_decimal": 1.49 },
-        { "outcome": "Devils", "odds_decimal": 3.03 }
+        { "outcome": "Devils", "odds_decimal": 3.03 },
+        { "outcome": "Draw", "odds_decimal": 5.80 }
       ]
     }
   ],
@@ -221,7 +222,7 @@ Example odds:
 - Best of 3 sets, first to 6 points per set
 - Singles (1v1) or Doubles (2v2)
 - Game day: two teams, 6-7 matches
-- Team with more match wins takes the game day
+- Team with more match wins takes the game day (3-3 tie possible in regular season)
 
 **Schedule:** Tue/Wed/Thu 3pm EST, Fri 7pm EST at JAM Arena, Miami
 
