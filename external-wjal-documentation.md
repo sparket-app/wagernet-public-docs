@@ -224,6 +224,6 @@ Example match odds:
 - Game day: two teams, 6-7 matches
 - Team with more match wins takes the game day (3-3 tie possible in regular season)
 
-**Schedule:** Tue/Wed/Thu 3pm EST, Fri 7pm EST at JAM Arena, Miami
+**Schedule:** Tue/Wed/Thu 3pm EST, Fri 7pm EST at JAM Arena, Miami. Matches run sequentially — each starts ~5 minutes after the previous one ends.
 
 **Seasons:** Multiple per year (Spring, Fall, Winter)
