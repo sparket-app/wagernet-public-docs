@@ -94,6 +94,7 @@ A **selection** is a single betting option within a market. Each selection inclu
 | `outcome` | What you're betting on (e.g. team name, "Over", "Under") |
 | `odds_decimal` | Odds in decimal format (e.g. 1.95, 2.50) |
 | `point` | The line for spread and totals markets (e.g. -3.5, 45.5). Absent for moneyline. |
+| `result` | Resolution result after event completion: `won`, `lost`, `void`, `push`. Absent when unresolved. |
 | `updated_at` | When these odds were last refreshed |
 
 All odds are **decimal format only**. To convert: implied probability = 1 / odds_decimal.
@@ -266,6 +267,7 @@ Response format: `{ "entities": [...] }`
 | `outcome` | string | What you're betting on (e.g. team name, "Over 45.5") |
 | `odds_decimal` | number | Decimal odds (e.g. 1.95) |
 | `point` | number | Optional — the line for spread/totals (e.g. -3.5, 45.5) |
+| `result` | string | Optional — resolution result: `won`, `lost`, `void`, or `push`. Null when unresolved. |
 | `updated_at` | string | Optional, when odds were last updated |
 
 ### EventResultPlacement

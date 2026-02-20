@@ -155,9 +155,9 @@ Example match odds:
     {
       "type": "moneyline",
       "selections": [
-        { "outcome": "Chargers", "odds_decimal": 1.49 },
-        { "outcome": "Devils", "odds_decimal": 3.03 },
-        { "outcome": "Draw", "odds_decimal": 5.80 }
+        { "outcome": "Chargers", "odds_decimal": 1.49, "result": "won" },
+        { "outcome": "Devils", "odds_decimal": 3.03, "result": "lost" },
+        { "outcome": "Draw", "odds_decimal": 5.80, "result": "lost" }
       ]
     }
   ],
@@ -210,8 +210,8 @@ Example match odds:
     {
       "type": "moneyline",
       "selections": [
-        { "outcome": "Iturbide & Ubilla", "odds_decimal": 1.75 },
-        { "outcome": "Benny & Etcheberry", "odds_decimal": 2.33 }
+        { "outcome": "Iturbide & Ubilla", "odds_decimal": 1.75, "result": "won" },
+        { "outcome": "Benny & Etcheberry", "odds_decimal": 2.33, "result": "lost" }
       ]
     }
   ],
