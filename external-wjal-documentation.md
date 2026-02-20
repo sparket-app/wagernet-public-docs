@@ -161,6 +161,10 @@ Example match odds:
       ]
     }
   ],
+  "results": [
+    { "entity_id": "aaa-...", "placement": 1 },
+    { "entity_id": "bbb-...", "placement": 2 }
+  ],
   "child_events": [
     { "id": "b13b07f6-...", "name": "Match 1 (Doubles): Chargers vs Devils", "event_type": "match", "status": "completed" },
     { "id": "5760685d-...", "name": "Match 2 (Doubles): Chargers vs Devils", "event_type": "match", "status": "completed" }
@@ -211,9 +215,30 @@ Example match odds:
       ]
     }
   ],
+  "results": [
+    { "entity_id": "ccc-...", "placement": 1 },
+    { "entity_id": "ddd-...", "placement": 2 }
+  ],
   "metadata": { "match_number": 1, "match_type": "D" }
 }
 ```
+
+---
+
+## Results
+
+Completed events include a `results` array with placement data for each competitor:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `entity_id` | string | UUID of the competitor entity |
+| `placement` | integer | 1 = winner, 2 = loser |
+
+**Match events:** The winning player/pair gets `placement=1`, the loser gets `placement=2`.
+
+**Performance events:** The team with more match wins gets `placement=1`. If both teams win equal matches (e.g. 3-3), both get `placement=1` (draw).
+
+Event `status` is determined by results — an event is `completed` only when results are present.
 
 ---
 

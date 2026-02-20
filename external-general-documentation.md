@@ -169,6 +169,7 @@ Response format: `{ "entities": [...] }`
 | `competitors` | Competitor[] | yes | Who is competing (may be empty) |
 | `child_events` | EventSummary[] | no | Sub-events if this is a parent |
 | `markets` | Market[] | yes | Betting markets (may be empty) |
+| `results` | EventResultPlacement[] | no | Result placements for completed events |
 | `metadata` | object | no | Provider-specific fields, varies by discipline |
 
 ### Event Status Values
@@ -266,6 +267,15 @@ Response format: `{ "entities": [...] }`
 | `odds_decimal` | number | Decimal odds (e.g. 1.95) |
 | `point` | number | Optional — the line for spread/totals (e.g. -3.5, 45.5) |
 | `updated_at` | string | Optional, when odds were last updated |
+
+### EventResultPlacement
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `entity_id` | string | UUID of the competitor entity |
+| `placement` | integer | Finishing position (1 = winner). Multiple entities at placement 1 = draw/tie. |
+
+Present only on completed events. The `results` array is ordered by placement ascending.
 
 ---
 
