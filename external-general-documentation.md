@@ -31,11 +31,11 @@ Category
 
 **Category** — the broadest grouping. Values: `sports`, `entertainment`, `politics`, `esports`, `financial`.
 
-**Discipline** — the specific sport or activity within a category. Examples: `american-football`, `auto-racing`, `jai-alai`. Each discipline belongs to exactly one category.
+**Discipline** — the specific sport or activity within a category. Examples: `american-football`, `auto-racing`, `jai-alai`, `baseball`. Each discipline belongs to exactly one category.
 
-**Competition** — a league, tournament, or recurring series within a discipline. Examples: `nfl`, `world-of-outlaws`, `wjal`. Each competition has a `country` field.
+**Competition** — a league, tournament, or recurring series within a discipline. Examples: `nfl`, `world-of-outlaws`, `wjal`, `mlb`. Each competition has a `country` field.
 
-**Season** — a time-bound instance of a competition. Examples: `nfl-2025`, `wjal-fall-2025`. Has optional `start_date` and `end_date`.
+**Season** — a time-bound instance of a competition. Examples: `nfl-2025`, `wjal-fall-2025`, `mlb-2026`. Has optional `start_date` and `end_date`.
 
 **Stage** — an optional grouping within a season. Not all events have a stage. When present, it represents a phase, round, or week — for example `Regular Season`, `Playoffs`, `Week 1`. Stages have an optional `stage_type` (e.g. `regular`, `playoffs`, `championship`) and `stage_number` for ordering.
 
@@ -59,6 +59,8 @@ An **entity** is an abstract participant that can appear across many events and 
 | `participant` | A generic participant (when type is unclear) | — |
 
 Each entity has a globally unique `uri` that stays stable across re-imports. URIs include a provider prefix to avoid collisions across disciplines (e.g. `wjal-devils`, `wjal-iturbide-44`).
+
+Entities also have an optional `discipline_uri` field that indicates which discipline they belong to. This is used to disambiguate entities that might share a name across sports (e.g. a team called "Giants" exists in both NFL and MLB). When present, `discipline_uri` ties the entity to a specific discipline like `baseball` or `american-football`.
 
 **Composed entities:** Entities of type `pair` include a `members` array containing their individual players. This nesting lets you see both the pair as a unit and the individual players within it.
 
@@ -182,6 +184,7 @@ Response format: `{ "entities": [...] }`
 | `completed` | Finished |
 | `cancelled` | Will not take place |
 | `postponed` | Delayed to a later time |
+| `suspended` | Started but halted mid-game (e.g. MLB suspended games that resume later) |
 
 ### Category
 
@@ -241,6 +244,7 @@ Response format: `{ "entities": [...] }`
 | `id` | string | UUID |
 | `uri` | string | Globally unique, stable identifier |
 | `type` | string | `team`, `player`, `pair`, or `participant` |
+| `discipline_uri` | string | Optional — discipline this entity belongs to (e.g. `baseball`, `american-football`). Used to disambiguate entities across sports. |
 | `name` | string | Display name |
 | `members` | EntityMember[] | Only for composed entities (pairs) — the individual players |
 
@@ -284,3 +288,4 @@ Present only on completed events. The `results` array is ordered by placement as
 ## Discipline-Specific Docs
 
 - [WJAL (Jai-Alai)](external-wjal-documentation.md)
+- [MLB (Baseball)](external-mlb-documentation.md)
