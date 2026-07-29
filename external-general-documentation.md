@@ -31,7 +31,7 @@ Category
 
 **Category** — the broadest grouping. Values: `sports`, `entertainment`, `politics`, `esports`, `financial`.
 
-**Discipline** — the specific sport or activity within a category. Examples: `american-football`, `auto-racing`, `jai-alai`, `baseball`. Each discipline belongs to exactly one category.
+**Discipline** — the specific sport or activity within a category. Examples: `american-football`, `auto-racing`, `jai-alai`, `baseball`, `pickleball`, `us-elections`. Each discipline belongs to exactly one category.
 
 **Competition** — a league, tournament, or recurring series within a discipline. Examples: `nfl`, `world-of-outlaws`, `wjal`, `mlb`. Each competition has a `country` field.
 
@@ -70,7 +70,7 @@ Entities also have an optional `discipline_uri` field that indicates which disci
 
 A **competitor** is an entity participating in a specific event. Each competitor has:
 - `entity` — the entity object (team, player, or pair)
-- `role` — their position in the event, typically `home` or `away`. Can also be `participant` when home/away doesn't apply.
+- `role` — their position in the event, typically `home` or `away`. Where home/away doesn't apply — a race, an election, a multi-way field — the role is `competitor` or `participant`.
 
 The entity type of competitors varies by event type. For example, a game-day event might have `team` competitors, while an individual match might have `pair` or `player` competitors. See discipline-specific docs for details.
 
