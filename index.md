@@ -7,3 +7,4 @@ title: WagerNet Documentation
 - [API Guide](external-general-documentation) — data model, endpoints, object reference
 - [WJAL (Jai-Alai)](external-wjal-documentation) — WJAL data model and how it maps into WagerNet
 - [MLB (Baseball)](external-mlb-documentation) — MLB data model and how it maps into WagerNet
+- [US Elections](external-elections-documentation) — US election data model and how it maps into WagerNet
