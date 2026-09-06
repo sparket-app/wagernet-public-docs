@@ -97,9 +97,26 @@ A **selection** is a single betting option within a market. Each selection inclu
 | `odds_decimal` | Odds in decimal format (e.g. 1.95, 2.50) |
 | `point` | The line for spread and totals markets (e.g. -3.5, 45.5). Absent for moneyline. |
 | `result` | Resolution result after event completion: `won`, `lost`, `void`, `push`. Absent when unresolved. |
+| `odds_source` | Where the current odds came from (e.g. `espn-draftkings`, `kalshi`, `tennis-model`) |
+| `odds_source_kind` | What that source's prices are: `book`, `exchange` or `model`. Absent for a source not classified. |
 | `updated_at` | When these odds were last refreshed |
 
 All odds are **decimal format only**. To convert: implied probability = 1 / odds_decimal.
+
+### Where a price comes from
+
+Every price carries its true origin in `odds_source`, and what kind of price that
+is in `odds_source_kind`:
+
+| Kind | What it means |
+|------|---------------|
+| `book` | A line a sportsbook posted and takes bets at |
+| `exchange` | A traded or pooled price — what the money itself says |
+| `model` | A computed price. Published where no market prices the event at all, and includes a model fused with market prices, since nobody posted it as a line |
+
+A model price is not interchangeable with a posted one, so weigh the two apart.
+A source WagerNet does not classify carries no `odds_source_kind` at all rather
+than a guessed one.
 
 ---
 
@@ -272,6 +289,8 @@ Response format: `{ "entities": [...] }`
 | `odds_decimal` | number | Decimal odds (e.g. 1.95) |
 | `point` | number | Optional — the line for spread/totals (e.g. -3.5, 45.5) |
 | `result` | string | Optional — resolution result: `won`, `lost`, `void`, or `push`. Null when unresolved. |
+| `odds_source` | string | Optional — true origin of the current odds |
+| `odds_source_kind` | string | Optional — `book`, `exchange` or `model`. Absent for an unclassified source. |
 | `updated_at` | string | Optional, when odds were last updated |
 
 ### EventResultPlacement
