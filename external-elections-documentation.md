@@ -64,7 +64,16 @@ Use `discipline_uri`, not `discipline` — an unrecognised filter name is ignore
 
 **Not covered:** primaries and party nominations, margin-of-victory and turnout ladders, seat-count brackets, ballot measures and constitutional amendments, multi-leg combination markets, and races belonging to any other election cycle.
 
-Measured on 2026-07-30 the feed held 614 events — 450 `us-house`, 81 `us-state-local`, 42 `us-governor`, 41 `us-senate` — with 1,399 outcomes across 253 entities. These counts move as races are added and settled.
+**A handful of events sit outside that rule.** The feed also carries a few special
+elections, a first-round market, and one market on which candidate will lead an opinion
+poll — and all of them are filed under the cycle's general-election stage like everything
+else. Nothing in the data marks them apart, so a consumer that assumes every event is a
+general-election race for an office will mis-file them. `metadata.kalshi_series_ticker` is
+the practical signal.
+
+The feed holds several hundred races, most of them `us-house`, and the counts move as races
+are added, redrawn and settled. Read them from `pagination.total` rather than assuming a
+size.
 
 ---
 
@@ -79,9 +88,20 @@ The outcomes are of one of two kinds:
 | The parties contesting the seat | `"Democratic Party"`, `"Republican Party"` | `party` |
 | The people running | `"Ro Khanna"`, `"Xavier Becerra"` | `candidate` |
 
-A race can mix them. Where a notable independent stands against the two major parties, the field is the two parties plus that person — for example Nebraska's Senate race lists Democratic Party, Republican Party and Dan Osborn. 11 of the 614 events had this shape on 2026-07-30.
+**Which kind a race uses follows the source contract and changes over time.** A race listed
+with party outcomes can be relisted with the candidates named instead once they are known,
+and most House races now name people. Don't assume a race keeps the shape you first saw it
+in.
 
-A party outcome is labelled with the **party**, never with that party's candidate, even where the source names the contract after the candidate. The contract pays out on whoever the party ends up running, so the party is what the selection says.
+**The `competitors` array and the selections can disagree.** A race relisted with candidate
+outcomes keeps the party entities in `competitors`, so an event can list four competitors —
+two parties and two people — while its market offers only the two people. Read the market's
+selections for what is actually offered, and use `competitors` only as the set of entities
+that have ever been attached to the race.
+
+Where a notable independent stands against the two major parties, the field is the two
+parties plus that person — for example Rhode Island's governor race lists Democratic Party,
+Republican Party and Ken Block. This shape is rare.
 
 ---
 
@@ -91,7 +111,8 @@ Every competitor has `role: "competitor"` — there is no home or away in an ele
 
 Entities are of type `party` or `candidate`, and both carry `discipline_uri: "us-elections"`. Entity URIs are the name normalised — `democratic-party`, `republican-party`, `ro-khanna`. A person is one entity across every race they appear in, so a candidate standing for two offices resolves to the same `id` and `uri` in both.
 
-There are two party entities. Candidate entities grow with the field: 251 on 2026-07-30.
+There are exactly two party entities. Candidate entities grow with the field and now number
+in the thousands.
 
 Elections have no season roster — `GET /api/v1/seasons/{uri}/entities` returns an empty array. Read the participants off each event's `competitors`.
 
@@ -99,7 +120,9 @@ Elections have no season roster — `GET /api/v1/seasons/{uri}/entities` returns
 
 ## Odds
 
-Odds are **decimal only**, in `odds_decimal`, and `odds_source` is `kalshi` on every selection.
+Odds are **decimal only**, in `odds_decimal`, and every selection carries
+`odds_source: "kalshi"` with `odds_source_kind: "exchange"` — a traded price, not a
+bookmaker's line. Because it is already a traded price, no margin is removed from it.
 
 These prices do not come from a bookmaker. They originate on a regulated event exchange, where each outcome is a contract that pays a fixed amount if it happens and nothing if it does not — so the traded price **is** the market's implied probability, and the decimal odds published here are its reciprocal:
 
@@ -111,8 +134,8 @@ There is no line to price against, so election selections carry **no `point`** �
 
 Two consequences worth designing for:
 
-- **A field does not sum to exactly 1.** Each selection is quoted independently and carries its own `updated_at`, so a field is not a synchronised snapshot, and the exchange's own spread sits on top of that. Across the 600 multi-outcome fields priced on 2026-07-30 the implied probabilities summed to a median of 1.000, ranging from 0.94 to 1.16. Raw market probabilities are published as they are; normalise the field yourself if you need them to add to 1.
-- **Long shots produce very large decimal odds.** The highest current value on the same date was 1000.0, from a contract quoted at a 0.1% chance.
+- **A field does not sum to exactly 1.** Each selection is quoted independently and carries its own `updated_at`, so a field is not a synchronised snapshot, and the exchange's own spread sits on top of that. Measured on 2026-09-10 the implied probabilities of a field summed to a median of 1.00, but the spread is wide — from 0.55 to 1.40. Raw market probabilities are published as they are; normalise the field yourself if you need them to add to 1, and don't size your tolerance off the median.
+- **Long shots produce very large decimal odds.** Values reach 1000.0, from a contract quoted at a 0.1% chance.
 
 ### Odds History
 
@@ -128,17 +151,27 @@ A row is appended **when a price moves**, not on a fixed schedule — a race who
 {
   "market_id": "5e6628a2-be5a-4764-87b4-eba951f64613",
   "quotes": [
-    { "selection_id": "b08a22e7-...", "outcome": "Democratic Party", "odds_source": "kalshi",
-      "odds_decimal": 4, "created_at": "2026-07-29T22:18:43.007647Z" },
-    { "selection_id": "0393fcae-...", "outcome": "Republican Party", "odds_source": "kalshi",
-      "odds_decimal": 1.3605, "created_at": "2026-07-28T21:52:35.851329Z" },
-    { "selection_id": "b08a22e7-...", "outcome": "Democratic Party", "odds_source": "kalshi",
-      "odds_decimal": 3.9216, "created_at": "2026-07-28T21:52:35.841128Z" }
+    { "selection_id": "0393fcae-...", "outcome": "Brandon Herrera", "odds_source": "kalshi",
+      "odds_source_kind": "exchange", "odds_decimal": 1.4599,
+      "created_at": "2026-09-09T19:24:49.822474Z" },
+    { "selection_id": "b08a22e7-...", "outcome": "Katy Padilla Stout", "odds_source": "kalshi",
+      "odds_source_kind": "exchange", "odds_decimal": 3.5088,
+      "created_at": "2026-09-08T19:24:43.807208Z" },
+    { "selection_id": "0393fcae-...", "outcome": "Brandon Herrera", "odds_source": "kalshi",
+      "odds_source_kind": "exchange", "odds_decimal": 1.3889,
+      "created_at": "2026-09-07T19:25:05.414464Z" }
   ]
 }
 ```
 
-`source` is optional; omit it to see quotes from every source on the market.
+**`outcome` is the selection's label as it stands now, not as it stood when the quote was
+recorded.** The source can relabel a contract in place — the same selection id that once
+read `"Democratic Party"` can read a candidate's name today — and the whole history then
+comes back under the new label. Join on `selection_id` if you need a stable series.
+
+`source` is optional; omit it to see quotes from every source on the market. `limit` defaults
+to 500 and is capped there. A `point` filter also exists, but elections carry no lines, so it
+has nothing to select on here.
 
 ---
 
@@ -187,7 +220,7 @@ Election events use the standard statuses. What drives them here is the election
 
 An event never reports `completed` before its `start_date`, whatever the prices say. A settled contract on an `upcoming` event means that outcome is out of the running, not that the race is over.
 
-On 2026-07-30 every election event was `upcoming` — the 2026 general election had not been held.
+On 2026-09-10 every election event was `upcoming` — the 2026 general election had not been held.
 
 ---
 
@@ -212,16 +245,23 @@ CA-17 on 2026-07-30:
 
 | Event id | Name | `kalshi_series_ticker` | Outcomes |
 |---|---|---|---|
-| `8840558b-7dd1-4190-ab4e-7c6597965b4f` | CA-17 House winner? | `KXHOUSERACE` | Democratic Party, Republican Party |
+| `8840558b-7dd1-4190-ab4e-7c6597965b4f` | CA-17 House winner? | `KXHOUSERACE` | Ro Khanna, Ritesh Tandon |
 | `74705d78-295b-40ec-bbfb-9ac50db08394` | CA-17 winner? (Person) | `KXCA17PERSON` | Ro Khanna, Nicholas Finan, Ethan Agarwal, Ha T Phan, Ritesh Tandon, Jason Park |
 
-Same seat, same `competition_uri`, same `start_date`, different ids, different competitors, unrelated markets. California Governor is the same story: `California Governor winner?` (two parties) alongside `California Governor winner? (Person)`.
+Same seat, same `competition_uri`, same `start_date`, different ids, unrelated markets — and
+here both now name people, so the two events are not even told apart by the kind of outcome
+they offer. California Governor is the same story: `California Governor winner?` alongside
+`California Governor winner? (Person)`. Some races carry an explicit `(Party)` or `(Person)`
+suffix in the `name`, but most do not.
 
 The reason is that the source publishes no identifier for the underlying race — only for each contract on it. There is no field to join on, and WagerNet does not invent one. A consumer that counts events, aggregates volume, or builds one product per event will **double count** these races unless it deduplicates itself; matching on `competition_uri` plus the district or office in `name` / `kalshi_sub_title` is the practical approach, and it is heuristic.
 
 ---
 
-## Example: Party-Outcome Race
+## Example: A House Race
+
+Filed as a party race by the source and later relabelled with the candidates, so its
+`competitors` hold both parties and both people while the market offers only the people.
 
 ```json
 {
@@ -238,18 +278,22 @@ The reason is that the source publishes no identifier for the underlying race �
   "stage": { "uri": "us-house-2026-general", "name": "General Election", "stage_type": "general", "stage_number": 2,
              "start_date": "2026-11-03T05:00:00Z", "end_date": "2026-11-04T05:00:00Z" },
   "competitors": [
-    { "entity": { "id": "a408681e-...", "uri": "democratic-party", "type": "party", "discipline_uri": "us-elections", "name": "Democratic Party" }, "role": "competitor" },
-    { "entity": { "id": "4e8854ce-...", "uri": "republican-party", "type": "party", "discipline_uri": "us-elections", "name": "Republican Party" }, "role": "competitor" }
+    { "entity": { "uri": "democratic-party", "type": "party", "discipline_uri": "us-elections", "name": "Democratic Party" }, "role": "competitor" },
+    { "entity": { "uri": "republican-party", "type": "party", "discipline_uri": "us-elections", "name": "Republican Party" }, "role": "competitor" },
+    { "entity": { "uri": "katy-padilla-stout", "type": "candidate", "discipline_uri": "us-elections", "name": "Katy Padilla Stout" }, "role": "competitor" },
+    { "entity": { "uri": "brandon-herrera", "type": "candidate", "discipline_uri": "us-elections", "name": "Brandon Herrera" }, "role": "competitor" }
   ],
   "markets": [
     {
       "id": "5e6628a2-be5a-4764-87b4-eba951f64613",
       "type": "moneyline",
       "selections": [
-        { "id": "b08a22e7-...", "outcome": "Democratic Party", "odds_decimal": 4,
-          "is_current": true, "odds_source": "kalshi", "updated_at": "2026-07-29T22:18:43.001859Z" },
-        { "id": "0393fcae-...", "outcome": "Republican Party", "odds_decimal": 1.3605,
-          "is_current": true, "odds_source": "kalshi", "updated_at": "2026-07-28T21:52:35.847312Z" }
+        { "id": "b08a22e7-...", "outcome": "Katy Padilla Stout", "odds_decimal": 3.2787,
+          "is_current": true, "odds_source": "kalshi", "odds_source_kind": "exchange",
+          "updated_at": "2026-09-09T19:24:49.805820Z" },
+        { "id": "0393fcae-...", "outcome": "Brandon Herrera", "odds_decimal": 1.4599,
+          "is_current": true, "odds_source": "kalshi", "odds_source_kind": "exchange",
+          "updated_at": "2026-09-09T19:24:49.817621Z" }
       ]
     }
   ],

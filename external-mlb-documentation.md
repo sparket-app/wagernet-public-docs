@@ -60,7 +60,21 @@ All MLB events have two `team` competitors with `home` and `away` roles.
 
 MLB team URIs are the normalised team name, e.g. `los-angeles-dodgers`. Each team entity has `discipline_uri` set to `baseball` to disambiguate from teams in other sports that share names (e.g. "Giants" in NFL vs MLB).
 
-Teams carry their ESPN and SportsDataIO ids in `provider_ids`, and each game carries ESPN's game id in `espn_id`.
+Teams carry both providers' ids in `provider_ids`, under the keys `espn` and `sportsdataio`:
+
+```json
+{ "uri": "chicago-white-sox", "type": "team", "discipline_uri": "baseball",
+  "name": "Chicago White Sox", "provider_ids": { "espn": "4", "sportsdataio": "16" } }
+```
+
+Those ids and `discipline_uri` appear only on the entity **embedded in an event's
+`competitors`**. The season-roster and single-entity endpoints return a reduced view —
+`id`, `uri`, `type` and `name` only — so read a team's provider ids off an event.
+
+Games carry a provider's own game id, but **which one depends on where the game came from**:
+games imported from ESPN carry `espn_id`, and the earlier SportsDataIO-era games carry
+`sportsdataio_id` instead. No game carries both, so check for the key you need rather than
+assuming `espn_id`.
 
 ---
 
@@ -70,11 +84,26 @@ MLB games can have the following market types:
 
 | Type | Description | Example |
 |------|-------------|---------|
-| `moneyline` | Which team wins | Dodgers / Padres |
-| `spread` | Run line (handicap) | Dodgers -1.5 / Padres +1.5 |
-| `totals` | Over/under on total runs | Over 8.5 / Under 8.5 |
+| `moneyline` | Which team wins | White Sox / Pirates |
+| `spread` | Run line (handicap) | Pirates -1.5 / White Sox +1.5 |
+| `totals` | Over/under on total runs | Over 7.5 / Under 7.5 |
 
-Odds are DraftKings lines as published by ESPN: `odds_source` is `espn-draftkings` and `odds_source_kind` is `book`.
+Current odds come from DraftKings by way of ESPN: `odds_source` is `espn-draftkings` and
+`odds_source_kind` is `book`.
+
+**The published price has the book's margin removed.** A market's implied probabilities sum
+to exactly 1, so `odds_decimal` will not match DraftKings' screen price — a two-way market
+sits near 1.99 / 2.01 rather than 1.91 / 1.91. The price as posted survives only in odds
+history, as `odds_decimal_raw`.
+
+Two gaps worth handling:
+
+- **Older games carry priced selections with no stated source.** Games from the
+  SportsDataIO era keep their odds but have no `odds_source` and no `odds_source_kind`, and
+  those prices still carry the book's margin. A price without a stated origin is not
+  evidence of one.
+- **Spring training games carry no markets at all**, even though they are events like any
+  other.
 
 ---
 
@@ -99,7 +128,46 @@ MLB events use all standard event statuses plus `suspended`:
 | `postponed` | Game delayed (e.g. weather) |
 | `suspended` | Game started but halted mid-game, to be resumed later |
 
-The `suspended` status is specific to MLB, where games can be stopped and resumed on a different day.
+`suspended` matters most in baseball, where a game can be stopped and resumed on another
+day, but it is not exclusive to it. Note that it cannot be passed to the `status` filter —
+that request returns 400 — so fetch without the filter and select client-side.
+
+---
+
+## Event Metadata
+
+Games imported from ESPN carry no `metadata`. The earlier SportsDataIO-era games carry:
+
+| Key | Meaning |
+|---|---|
+| `provider_status` | The source's own status string, e.g. `Final`, `Scheduled`, `Postponed` |
+| `starting_pitchers` | `{ "home": name, "away": name }` |
+| `rescheduled_game_id` / `rescheduled_from_game_id` | Links a postponed game to its replacement |
+| `suspension_resume_date` | When a suspended game resumes |
+
+---
+
+## Results and Settlement
+
+A completed game gains a `results` array, one entry per team:
+
+```json
+"results": [
+  { "entity_id": "d38a42dd-...", "placement": 1, "score": { "runs": 2 } },
+  { "entity_id": "eceba879-...", "placement": 2, "score": { "runs": 0 } }
+]
+```
+
+`placement` is 1 for the winner and 2 for the loser. The score's `runs` is what every market
+settles against; older games also carry `hits` and `errors`.
+
+| Market | How it settles |
+|---|---|
+| `moneyline` | The winner `won`, the loser `lost` |
+| `spread` | The team's runs plus the selection's `point` against the opponent's runs; landing exactly on the line is a `push` |
+| `totals` | Both teams' runs summed against the `point`; exactly on the line is a `push` |
+
+Run lines and totals are usually half-numbers, which cannot push.
 
 ---
 
@@ -107,12 +175,12 @@ The `suspended` status is specific to MLB, where games can be stopped and resume
 
 ```json
 {
-  "id": "a1b2c3d4-...",
-  "name": "San Diego Padres vs Los Angeles Dodgers",
-  "start_date": "2026-09-12T02:10:00Z",
+  "id": "7ea686a7-...",
+  "name": "Pittsburgh Pirates vs Chicago White Sox",
+  "start_date": "2026-09-10T23:40:00Z",
   "status": "upcoming",
   "event_type": "match",
-  "espn_id": "401817071",
+  "espn_id": "401816886",
   "category": { "uri": "sports", "name": "Sports" },
   "discipline": { "uri": "baseball", "name": "Baseball" },
   "competition": { "uri": "mlb", "name": "MLB", "country": "US", "discipline_uri": "baseball" },
@@ -120,38 +188,50 @@ The `suspended` status is specific to MLB, where games can be stopped and resume
   "stage": { "uri": "mlb-2026-regular-season", "name": "Regular Season", "stage_type": "regular-season", "stage_number": 2 },
   "competitors": [
     {
-      "entity": { "uri": "los-angeles-dodgers", "type": "team", "name": "Los Angeles Dodgers", "discipline_uri": "baseball",
-                  "provider_ids": { "espn": "19", "sportsdataio": "1" } },
+      "entity": { "uri": "chicago-white-sox", "type": "team", "name": "Chicago White Sox", "discipline_uri": "baseball",
+                  "provider_ids": { "espn": "4", "sportsdataio": "16" } },
       "role": "home"
     },
     {
-      "entity": { "uri": "san-diego-padres", "type": "team", "name": "San Diego Padres", "discipline_uri": "baseball",
-                  "provider_ids": { "espn": "25", "sportsdataio": "33" } },
+      "entity": { "uri": "pittsburgh-pirates", "type": "team", "name": "Pittsburgh Pirates", "discipline_uri": "baseball",
+                  "provider_ids": { "espn": "23", "sportsdataio": "4" } },
       "role": "away"
     }
   ],
   "markets": [
     {
+      "id": "4ed403c7-...",
       "type": "moneyline",
       "selections": [
-        { "outcome": "Los Angeles Dodgers", "odds_decimal": 1.67, "odds_source": "espn-draftkings", "odds_source_kind": "book" },
-        { "outcome": "San Diego Padres", "odds_decimal": 2.30, "odds_source": "espn-draftkings", "odds_source_kind": "book" }
+        { "id": "1434e1c0-...", "outcome": "Chicago White Sox", "odds_decimal": 1.9948, "is_current": true,
+          "odds_source": "espn-draftkings", "odds_source_kind": "book", "updated_at": "2026-09-10T17:56:53.122995Z" },
+        { "id": "cb508e47-...", "outcome": "Pittsburgh Pirates", "odds_decimal": 2.0053, "is_current": true,
+          "odds_source": "espn-draftkings", "odds_source_kind": "book", "updated_at": "2026-09-10T17:56:53.136541Z" }
       ]
     },
     {
+      "id": "f6d5d80b-...",
       "type": "spread",
       "selections": [
-        { "outcome": "Los Angeles Dodgers", "odds_decimal": 1.91, "point": -1.5, "odds_source": "espn-draftkings", "odds_source_kind": "book" },
-        { "outcome": "San Diego Padres", "odds_decimal": 1.91, "point": 1.5, "odds_source": "espn-draftkings", "odds_source_kind": "book" }
+        { "outcome": "Chicago White Sox", "odds_decimal": 1.6024, "point": 1.5, "is_current": true,
+          "odds_source": "espn-draftkings", "odds_source_kind": "book" },
+        { "outcome": "Pittsburgh Pirates", "odds_decimal": 2.6601, "point": -1.5, "is_current": true,
+          "odds_source": "espn-draftkings", "odds_source_kind": "book" }
       ]
     },
     {
+      "id": "f8e2803d-...",
       "type": "totals",
       "selections": [
-        { "outcome": "Over", "odds_decimal": 1.91, "point": 8.5, "odds_source": "espn-draftkings", "odds_source_kind": "book" },
-        { "outcome": "Under", "odds_decimal": 1.91, "point": 8.5, "odds_source": "espn-draftkings", "odds_source_kind": "book" }
+        { "outcome": "Over", "odds_decimal": 1.9293, "point": 7.5, "is_current": true,
+          "odds_source": "espn-draftkings", "odds_source_kind": "book" },
+        { "outcome": "Under", "odds_decimal": 2.0761, "point": 7.5, "is_current": true,
+          "odds_source": "espn-draftkings", "odds_source_kind": "book" }
       ]
     }
   ]
 }
 ```
+
+The moneyline reads 1.9948 / 2.0053 rather than a book's 1.91 / 1.91 because the margin has
+been removed: the two implied probabilities sum to exactly 1.

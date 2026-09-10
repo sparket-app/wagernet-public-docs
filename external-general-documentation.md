@@ -51,21 +51,25 @@ Category
 
 ### Hierarchy Levels
 
-**Category** — the broadest grouping. Values: `sports`, `entertainment`, `politics`, `esports`, `financial`, `other`.
+**Category** — the broadest grouping. `sports`, `entertainment` and `politics` carry data today; `esports`, `financial` and `other` are defined but unused.
 
 **Discipline** — the specific sport or activity within a category. Examples: `american-football`, `baseball`, `basketball`, `soccer`, `tennis`, `jai-alai`, `pickleball`, `auto-racing`, `us-elections`. Each discipline belongs to exactly one category. `GET /api/v1/disciplines` returns the current list.
 
-**Competition** — a league, tournament, or recurring series within a discipline. Examples: `nfl`, `mlb`, `premier-league`, `champions-league`, `us-open-mens-singles`, `worldoutlaws`, `wjal`. Each competition has a `country` field.
+**Competition** — a league, tournament, or recurring series within a discipline. Examples: `nfl`, `mlb`, `premier-league`, `champions-league`, `us-open-mens-singles`, `worldoutlaws`, `wjal`. Each competition has a `country`, but its form follows the source: a code for US competitions (`US`), a country name elsewhere (`Germany`, `Türkiye`), and `International` for a competition belonging to no one country. Don't parse it as an ISO code.
+
+In tennis a competition is one **draw**, not one tournament, and the list grows through the season as draws are published — so discover competitions from the API rather than hardcoding them.
 
 **Season** — a time-bound instance of a competition. Examples: `mlb-2026`, `mls-2026`, `us-open-mens-singles-2026`, `wjal-spring-2026`. Has optional `start_date` and `end_date`.
 
-**Stage** — an optional grouping within a season. Not all events have a stage. When present, it represents a phase, round, or week — for example `Regular Season`, `Playoffs`, `Week 1`. Stages have an optional `stage_type` (e.g. `regular-season`, `wild-card`, `general`) and `stage_number` for ordering.
+**Stage** — an optional grouping within a season. Not all events have a stage. When present, it represents a phase, round, or week — for example `Regular Season`, `Quarterfinal`, `Week 1`. Stages have an optional `stage_type` (e.g. `regular-season`, `postseason`, `wild-card`, `qualifying`, `main`, `general`) and `stage_number` for ordering within the season.
 
 ### Events
 
 An **event** is anything you can bet on — a game, a match, a race, a performance. Events always belong to a season, and optionally to a stage within that season.
 
-Each event has an `event_type` field describing what it is. The values depend on the discipline — team sports and tennis use `match`, elections use `election`, and jai-alai uses `performance` (game day) and `match` (individual match).
+Each event has an `event_type` field describing what it is. The values depend on the discipline — team sports and tennis use `match`, elections use `election`, ranking markets use `ranking`, and jai-alai and pickleball use `performance` (a game day) alongside `match` (one match within it). It can also be absent, as it is on placeholder playoff games that may never be played.
+
+`start_date` can be absent too, on an event whose slot exists before it is scheduled. Where it is present, treat it as the scheduled time rather than a firm one: in sports played back-to-back on the same court, every match of an unscheduled round can share a single placeholder timestamp.
 
 **Nested events:** Events can form parent-child relationships. A parent event contains `child_events[]` (lightweight summaries), and each child event has a `parent_event_id` pointing back. For example, a jai-alai game day is a parent event containing 6 individual matches as children. Not all disciplines use nesting.
 
@@ -88,7 +92,7 @@ Each entity has a globally unique `uri` that stays stable across re-imports. Mos
 
 Entities also have an optional `discipline_uri` field that indicates which discipline they belong to. This is used to disambiguate entities that might share a name across sports (e.g. a team called "Giants" exists in both NFL and MLB). When present, `discipline_uri` ties the entity to a specific discipline like `baseball` or `american-football`.
 
-**Provider ids:** `provider_ids` maps each upstream provider to its id for the entity — for example `{ "espn": "19", "sportsdataio": "1" }` for the Los Angeles Dodgers. It is empty for entities that no upstream provider identifies.
+**Provider ids:** `provider_ids` maps each upstream provider to its id for the entity — for example `{ "espn": "19", "sportsdataio": "1" }` for the Los Angeles Dodgers. The keys are provider namespaces, and a provider that keys entities per sport appears once per sport: `espn-tennis` for a tennis player, `espn-soccer` for a football club. Read the keys present rather than assuming a fixed set; the map is empty for entities no upstream provider identifies.
 
 **Composed entities:** Entities of type `pair` include a `members` array containing their individual players. This nesting lets you see both the pair as a unit and the individual players within it.
 
@@ -102,6 +106,8 @@ A **competitor** is an entity participating in a specific event. Each competitor
 
 The entity type of competitors varies by event type. For example, a game-day event might have `team` competitors, while an individual match might have `pair` or `player` competitors. See discipline-specific docs for details.
 
+A two-way event can carry **more than two competitor rows** — a replaced participant stays in the array. Read the market's selections and the event's `results` rather than assuming the array's length.
+
 ### Markets
 
 A **market** is a betting category on an event. Market types:
@@ -113,10 +119,13 @@ A **market** is a betting category on an event. Market types:
 | `totals` | Over/under on total points |
 | `game_spread` | Games difference (handicap), where `spread` counts a larger unit — sets, in tennis |
 | `game_totals` | Over/under on total games |
+| `to_advance` | Which side progresses, decided including extra time and penalties |
 
-Where a draw is possible — soccer, for example — the moneyline has a third `Draw` selection.
+Where a draw is possible — soccer, for example — the moneyline has a third `Draw` selection. A selection does not carry the entity it belongs to, so match a selection to a competitor by its `outcome`, which is the competitor's display name (or `Over` / `Under` / `Draw`).
 
-Not all events have markets. Some data sources provide events without odds, in which case `markets` will be an empty array. A market can also be listed before anyone prices it; its selections then carry `odds_decimal: null` until a price arrives.
+Not all events have markets. Some data sources provide events without odds, in which case `markets` will be an empty array.
+
+**A market can exist before it is priced.** The moneyline is often created with the event, and its selections then carry **no** `odds_decimal`, `odds_source` or `odds_source_kind` at all — the fields are omitted, not null. Around a fifth of upcoming soccer and college-football moneylines are in this state at any time, because books post those lines only days ahead. Treat "the market exists" and "the market has a price" as two different states, and expect missing keys rather than nulls. Spread and totals markets are usually absent entirely until priced, so the number of markets on an event varies.
 
 ### Selections
 
@@ -126,17 +135,19 @@ A **selection** is a single betting option within a market. Each selection inclu
 |-------|-------------|
 | `id` | UUID |
 | `outcome` | What you're betting on (e.g. team name, "Over", "Under") |
-| `odds_decimal` | Odds in decimal format (e.g. 1.95, 2.50). Null until the market is priced. |
+| `odds_decimal` | Odds in decimal format (e.g. 1.95, 2.50). Absent until the market is priced. |
 | `point` | The line for spread and totals markets (e.g. -3.5, 45.5). Absent for moneyline. |
 | `result` | Resolution result after event completion: `won`, `lost`, `void`, `push`. Absent when unresolved. |
 | `is_current` | `false` for a selection no longer offered, such as a withdrawn candidate |
-| `odds_source` | Where the current odds came from (e.g. `espn-draftkings`, `kalshi`, `tennis-model`) |
+| `odds_source` | Where the current odds came from (e.g. `espn-draftkings`, `kalshi`, `sparket.ai`, `tennis-model`) |
 | `odds_source_kind` | What that source's prices are: `book`, `exchange` or `model`. Absent for a source not classified. |
 | `updated_at` | When these odds were last refreshed |
 
 All odds are **decimal format only**. To convert: implied probability = 1 / odds_decimal.
 
-By default only current selections are returned. Pass `include_historical=true` to also get the ones no longer offered.
+**Book prices are published fair, with the margin removed.** A sportsbook's posted line carries its margin, so the implied probabilities of a market sum to more than 1. WagerNet normalises them to sum to exactly 1 and publishes that fair price as `odds_decimal`, so it will not match the book's screen price. The price as posted survives only in odds history, as `odds_decimal_raw`. Removing the margin again is harmless — the operation repeats without effect — but expect a fair price, not a book one. Model prices are treated as already fair and are neither adjusted nor given a raw counterpart.
+
+By default only current selections are returned. Pass `include_historical=true` to also get the ones no longer offered. A market whose line moved keeps the superseded selections this way, so one market can hold a whole ladder of lines with only the live one current — and a market can come back with an empty `selections` array when none of its rows is current.
 
 ### Where a price comes from
 
@@ -151,9 +162,12 @@ is in `odds_source_kind`:
 
 A model price is not interchangeable with a posted one, so weigh the two apart.
 A source WagerNet does not classify carries no `odds_source_kind` at all rather
-than a guessed one.
+than a guessed one, and some older priced selections carry no `odds_source`
+either — a price without a stated origin is not evidence of one.
 
 Markets on one event can come from different sources — a tennis match can carry a `model` moneyline next to a spread from another source — so read the source per selection, not per event.
+
+**A selection's `odds_source` is whoever wrote its current price, not the market's history.** Model prices pushed in by a partner pipeline take precedence permanently: once such a price owns a selection, an incoming book price never replaces it, however recent. The book's observations keep landing in odds history regardless, so a market can read entirely `model` on its selections while its history is largely `book`. To follow one source over time, filter odds history by `source` rather than reading the selection.
 
 ---
 
@@ -224,9 +238,9 @@ GET /api/v1/seasons/{uri}/entities  → team rosters for a season
 GET /api/v1/entities/{id}           → single entity
 ```
 
-The roster endpoint returns teams with their members (players and pairs) for that season, as `{ "entities": [...] }`. Pair entities include their individual player members nested inside.
+The roster endpoint returns teams with their members (players and pairs) for that season, as `{ "entities": [...] }`. Pair entities include their individual player members nested inside. It is built from whoever has appeared in an imported event rather than from a published squad list, so it grows through a season and is empty for disciplines that field individuals rather than teams — tennis and elections return an empty array.
 
-The single-entity endpoint returns the entity object itself, including `members` for a pair.
+The single-entity endpoint returns a reduced view: `id`, `uri`, `type` and `name` only, with `members` for a pair. It carries neither `discipline_uri` nor `provider_ids` — for those, read the entity embedded in an event's `competitors`.
 
 ### Odds History
 
@@ -377,8 +391,8 @@ There is no streaming or webhook feed; poll the REST endpoints.
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | string | UUID |
-| `outcome` | string | What you're betting on (e.g. team name, "Over 45.5") |
-| `odds_decimal` | number | Decimal odds (e.g. 1.95). Null until the market is priced. |
+| `outcome` | string | What you're betting on — a competitor's display name, or `Over` / `Under` / `Draw` |
+| `odds_decimal` | number | Decimal odds (e.g. 1.95), margin removed. Absent until the market is priced. |
 | `point` | number | Optional — the line for spread/totals (e.g. -3.5, 45.5) |
 | `result` | string | Optional — resolution result: `won`, `lost`, `void`, or `push`. Null when unresolved. |
 | `is_current` | boolean | `false` for a selection no longer offered |
@@ -392,7 +406,8 @@ There is no streaming or webhook feed; poll the REST endpoints.
 |-------|------|-------------|
 | `selection_id` | string | Selection this price belongs to |
 | `outcome` | string | Outcome of that selection |
-| `odds_decimal` | number | Decimal odds recorded |
+| `odds_decimal` | number | Decimal odds recorded, margin removed |
+| `odds_decimal_raw` | number | Optional — the price as the book posted it, margin included. Book sources only |
 | `point` | number | Optional — the line at the time, for spread/totals |
 | `odds_source` | string | True origin of the price |
 | `odds_source_kind` | string | Optional — `book`, `exchange` or `model` |
@@ -415,13 +430,24 @@ There is no streaming or webhook feed; poll the REST endpoints.
 |-------|------|-------------|
 | `entity_id` | string | UUID of the competitor entity |
 | `placement` | integer | Finishing position (1 = winner). Multiple entities at placement 1 = draw/tie. |
+| `score` | object | Optional — the final score, shaped by the sport |
 
 Present only on completed events. The `results` array is ordered by placement ascending.
+
+`score` is whatever that sport counts: `{ "points": 24 }` in American football, `{ "goals": 2 }` in soccer, and in tennis a per-set breakdown plus `sets_won` and `games_won`. Read the keys the discipline documents rather than assuming a shape.
+
+**A draw puts every tied side at `placement: 1`.** Code that reads "placement 1 = the winner" will report two winners on a drawn match. How the moneyline then settles depends on whether the market offers a draw: where a `Draw` selection exists it wins and both sides lose, and where none exists every side pushes.
 
 ---
 
 ## Discipline-Specific Docs
 
-- [WJAL (Jai-Alai)](external-wjal-documentation.md)
+- [American Football](external-american-football-documentation.md) — NFL and college football
+- [Soccer](external-soccer-documentation.md)
+- [Tennis](external-tennis-documentation.md)
 - [MLB (Baseball)](external-mlb-documentation.md)
+- [WJAL (Jai-Alai)](external-wjal-documentation.md)
 - [US Elections](external-elections-documentation.md)
+
+Basketball, pickleball, auto-racing and Netflix ranking markets are also served but have no
+page of their own yet; discover them through `GET /api/v1/disciplines`.

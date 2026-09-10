@@ -11,10 +11,10 @@ See [General Documentation](external-general-documentation.md) for general Wager
 ```
 Discipline: jai-alai
 └── Competition: wjal
-    └── Season: wjal-spring-2026
-        ├── Stage: Regular Season
-        ├── Stage: Playoffs
-        └── Stage: Championship
+    └── Season: wjal-fall-2026
+        ├── Stage: Regular Season   (uri: wjal-fall-2026-regular,      stage_type: regular)
+        ├── Stage: Playoffs         (uri: wjal-fall-2026-playoffs,     stage_type: playoffs)
+        └── Stage: Championship     (uri: wjal-fall-2026-championship, stage_type: championship)
             └── Performance (parent event, event_type=performance)
                 ├── Match 1 (Doubles) (child event, event_type=match)
                 ├── Match 2 (Doubles)
@@ -22,23 +22,42 @@ Discipline: jai-alai
                 └── Match 6 (Doubles)
 ```
 
-- **Stage** = season phase (Regular Season, Playoffs, Championship)
+- **Stage** = season phase (Regular Season, Playoffs, Championship). Note the regular-season
+  `stage_type` is `regular`, not the `regular-season` used by other sports.
 - **Performance** = game day (two teams, 6-7 matches)
 - **Match** = individual match (child event linked via `parent_event_id`)
+
+There are two seasons a year, Spring and Fall, named `wjal-spring-{year}` and
+`wjal-fall-{year}`. A season's rows exist from the moment it is created, so the current
+season can be listed with no events and an incomplete roster until its schedule and
+rankings are published. Read the season list rather than hardcoding a season:
+
+```bash
+curl "https://bf3zb3ipuy.us-east-1.awsapprunner.com/api/v1/competitions/wjal/seasons"
+```
 
 ---
 
 ## Quick Start
 
 ```bash
-# All jai-alai events
-curl "https://bf3zb3ipuy.us-east-1.awsapprunner.com/api/v1/events?discipline_uri=jai-alai"
+BASE=https://bf3zb3ipuy.us-east-1.awsapprunner.com
+
+# The seasons, newest first — pick one before querying below
+curl "$BASE/api/v1/competitions/wjal/seasons"
+
+# All jai-alai events, 100 per page
+curl "$BASE/api/v1/events?discipline_uri=jai-alai&pageSize=100"
+
+# Just the game days, or just the matches
+curl "$BASE/api/v1/events?discipline_uri=jai-alai&type=performance"
+curl "$BASE/api/v1/events?discipline_uri=jai-alai&type=match"
 
 # Season stages
-curl "https://bf3zb3ipuy.us-east-1.awsapprunner.com/api/v1/seasons/wjal-spring-2026/stages"
+curl "$BASE/api/v1/seasons/wjal-spring-2026/stages"
 
 # Team rosters (players + pairs)
-curl "https://bf3zb3ipuy.us-east-1.awsapprunner.com/api/v1/seasons/wjal-spring-2026/entities"
+curl "$BASE/api/v1/seasons/wjal-spring-2026/entities"
 ```
 
 ---
@@ -57,14 +76,14 @@ To find which team a match competitor belongs to, look up the parent performance
 
 ## Teams
 
-| Team | URI |
+| Team `name` | URI |
 |------|-----|
-| Dejada Devils | `wjal-devils` |
-| Wall Warriors | `wjal-warriors` |
+| Devils | `wjal-devils` |
+| Warriors | `wjal-warriors` |
 | Chargers | `wjal-chargers` |
 | Cyclones | `wjal-cyclones` |
 | Fireballs | `wjal-fireballs` |
-| Rebote Renegades | `wjal-renegades` |
+| Renegades | `wjal-renegades` |
 
 ---
 
@@ -95,6 +114,12 @@ Each season, WJAL assigns every player and pair a **division** (matchup slot) an
 
 - **Division** — determines who plays whom. Same-division players from different teams face each other. Singles have divisions 1-5, doubles have divisions 1-6.
 - **Ranking** — skill rating within a division across all 6 teams. 1 = strongest, 6 = weakest.
+
+Division and ranking are published per season, and a season carries none until its rankings
+are set — a newly created season's roster lists its teams and members with no `division` or
+`ranking` at all. Even within a ranked season some members carry neither: 17 of the 83
+members of `wjal-spring-2026` have no division or ranking. A member without a ranking is
+priced as a mid-table one rather than skipped.
 
 Division and ranking are available on the entities endpoint:
 
@@ -133,8 +158,10 @@ Example match odds:
 | Matchup | Home Odds | Away Odds |
 |---------|-----------|-----------|
 | Rank 1 vs Rank 6 | 1.17 | 7.00 |
-| Rank 2 vs Rank 4 | 1.40 | 3.50 |
+| Rank 2 vs Rank 4 | 1.60 | 2.67 |
 | Rank 3 vs Rank 3 | 2.00 | 2.00 |
+
+Every WJAL selection carries `odds_source: "wjal"` with `odds_source_kind: "book"`.
 
 ---
 
@@ -238,7 +265,14 @@ Completed events include a `results` array with placement data for each competit
 
 **Performance events:** The team with more match wins gets `placement=1`. If both teams win equal matches (e.g. 3-3), both get `placement=1` (draw).
 
-Event `status` is determined by results — an event is `completed` only when results are present.
+**A match can have three competitors.** Where a player or pair was substituted, the replaced
+side stays in the `competitors` array, the moneyline carries the extra outcome as a losing
+selection, and the placements read `1, 2, 2`. Read the market and the results rather than
+assuming two competitors.
+
+A `completed` event normally carries results, but not always — a small number are marked
+completed with no `results` and no settled selections. Check for the array rather than
+inferring it from the status.
 
 ---
 
@@ -249,6 +283,8 @@ Event `status` is determined by results — an event is `completed` only when re
 - Game day: two teams, 6-7 matches
 - Team with more match wins takes the game day (3-3 tie possible in regular season)
 
-**Schedule:** Tue/Wed/Thu 3pm EST, Fri 7pm EST at JAM Arena, Miami. Matches run sequentially — each starts ~5 minutes after the previous one ends.
+**Schedule:** typically Tue/Wed/Thu afternoon and Fri evening US Eastern at JAM Arena,
+Miami, with occasional exceptions. Matches run sequentially — each starts ~5 minutes after
+the previous one ends. Read `start_date`, which is UTC, rather than assuming a slot.
 
-**Seasons:** Multiple per year (Spring, Fall, Winter)
+**Seasons:** two per year, Spring and Fall.
