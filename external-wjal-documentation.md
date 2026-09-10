@@ -32,7 +32,7 @@ Discipline: jai-alai
 
 ```bash
 # All jai-alai events
-curl "https://bf3zb3ipuy.us-east-1.awsapprunner.com/api/v1/events?discipline=jai-alai"
+curl "https://bf3zb3ipuy.us-east-1.awsapprunner.com/api/v1/events?discipline_uri=jai-alai"
 
 # Season stages
 curl "https://bf3zb3ipuy.us-east-1.awsapprunner.com/api/v1/seasons/wjal-spring-2026/stages"
