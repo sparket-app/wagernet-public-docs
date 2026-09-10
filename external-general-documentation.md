@@ -83,6 +83,8 @@ A **market** is a betting category on an event. Market types:
 | `moneyline` | Who wins the event |
 | `spread` | Point difference (handicap) |
 | `totals` | Over/under on total points |
+| `game_spread` | Games difference (handicap), where `spread` counts a larger unit — sets, in tennis |
+| `game_totals` | Over/under on total games |
 
 Not all events have markets. Some data sources provide events without odds, in which case `markets` will be an empty array.
 
@@ -277,7 +279,7 @@ Response format: `{ "entities": [...] }`
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | string | UUID |
-| `type` | string | `moneyline`, `spread`, or `totals` |
+| `type` | string | `moneyline`, `spread`, `totals`, `game_spread`, or `game_totals` |
 | `selections` | Selection[] | The betting options |
 
 ### Selection
