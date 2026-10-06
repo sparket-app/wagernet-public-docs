@@ -53,7 +53,7 @@ Category
 
 **Category** — the broadest grouping. `sports`, `entertainment` and `politics` carry data today; `esports`, `financial` and `other` are defined but unused.
 
-**Discipline** — the specific sport or activity within a category. Examples: `american-football`, `baseball`, `basketball`, `soccer`, `tennis`, `jai-alai`, `pickleball`, `auto-racing`, `us-elections`. Each discipline belongs to exactly one category. `GET /api/v1/disciplines` returns the current list.
+**Discipline** — the specific sport or activity within a category. Examples: `american-football`, `baseball`, `basketball`, `ice-hockey`, `soccer`, `tennis`, `jai-alai`, `pickleball`, `auto-racing`, `us-elections`. Each discipline belongs to exactly one category. `GET /api/v1/disciplines` returns the current list.
 
 **Competition** — a league, tournament, or recurring series within a discipline. Examples: `nfl`, `mlb`, `premier-league`, `champions-league`, `us-open-mens-singles`, `worldoutlaws`, `wjal`. Each competition has a `country`, but its form follows the source: a code for US competitions (`US`), a country name elsewhere (`Germany`, `Türkiye`), and `International` for a competition belonging to no one country. Don't parse it as an ISO code.
 
@@ -449,5 +449,5 @@ Present only on completed events. The `results` array is ordered by placement as
 - [WJAL (Jai-Alai)](external-wjal-documentation.md)
 - [US Elections](external-elections-documentation.md)
 
-Basketball, pickleball, auto-racing and Netflix ranking markets are also served but have no
+Basketball, ice hockey, pickleball, auto-racing and Netflix ranking markets are also served but have no
 page of their own yet; discover them through `GET /api/v1/disciplines`.
