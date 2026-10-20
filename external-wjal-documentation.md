@@ -265,6 +265,10 @@ Completed events include a `results` array with placement data for each competit
 
 **Performance events:** The team with more match wins gets `placement=1`. If both teams win equal matches (e.g. 3-3), both get `placement=1` (draw).
 
+**Unplayed matches:** A game day stops once its result is decided, so a playoff day listed
+with seven matches can end after five. A match that was never played becomes `cancelled`
+and its selections are voided, within about twelve hours of the game day's start.
+
 **A match can have three competitors.** Where a player or pair was substituted, the replaced
 side stays in the `competitors` array, the moneyline carries the extra outcome as a losing
 selection, and the placements read `1, 2, 2`. Read the market and the results rather than

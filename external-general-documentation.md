@@ -308,6 +308,10 @@ There is no streaming or webhook feed; poll the REST endpoints.
 
 `suspended` appears on events but is not accepted by the `status` filter.
 
+A playoff series lists every possible game up front. When a baseball, basketball or ice
+hockey series ends early, its unplayed "if necessary" games become `cancelled` and their
+selections are voided.
+
 ### Category
 
 | Field | Type | Description |
