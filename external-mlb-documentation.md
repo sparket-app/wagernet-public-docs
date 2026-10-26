@@ -178,6 +178,7 @@ Run lines and totals are usually half-numbers, which cannot push.
   "id": "7ea686a7-...",
   "name": "Pittsburgh Pirates vs Chicago White Sox",
   "start_date": "2026-09-10T23:40:00Z",
+  "start_time_tbd": false,
   "status": "upcoming",
   "event_type": "match",
   "espn_id": "401816886",

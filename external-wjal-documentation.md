@@ -172,6 +172,7 @@ Every WJAL selection carries `odds_source: "wjal"` with `odds_source_kind: "book
   "id": "de72ff88-...",
   "name": "Chargers vs Devils - 2026-02-13",
   "start_date": "2026-02-13T19:00:00Z",
+  "start_time_tbd": false,
   "status": "completed",
   "event_type": "performance",
   "competitors": [

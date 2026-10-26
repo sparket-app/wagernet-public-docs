@@ -240,6 +240,7 @@ polls, and read the market's odds history for every move in between.
   "id": "c086363b-...",
   "name": "Real Salt Lake vs Seattle Sounders FC",
   "start_date": "2026-09-24T01:30:00Z",
+  "start_time_tbd": false,
   "status": "upcoming",
   "event_type": "match",
   "espn_id": "761543",

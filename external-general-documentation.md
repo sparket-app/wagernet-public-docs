@@ -71,6 +71,8 @@ Each event has an `event_type` field describing what it is. The values depend on
 
 `start_date` can be absent too, on an event whose slot exists before it is scheduled. Where it is present, treat it as the scheduled time rather than a firm one: in sports played back-to-back on the same court, every match of an unscheduled round can share a single placeholder timestamp.
 
+`start_time_tbd` says when that is the case. It is `true` when the provider has set the day but not the time: `start_date` then falls on the right day and its time is a placeholder, so it must not be read as the moment the event starts. Judge whether such an event is under way from its `status`, and whether it is overdue from the end of its day. It clears once the provider sets a time.
+
 **Nested events:** Events can form parent-child relationships. A parent event contains `child_events[]` (lightweight summaries), and each child event has a `parent_event_id` pointing back. For example, a jai-alai game day is a parent event containing 6 individual matches as children. Not all disciplines use nesting.
 
 Events that came from an upstream provider carry that provider's event id — `espn_id` or `sportsdataio_id` — so you can join them against another feed.
@@ -278,6 +280,7 @@ There is no streaming or webhook feed; poll the REST endpoints.
 | `id` | string | yes | UUID |
 | `name` | string | yes | Display name |
 | `start_date` | string | no | UTC timestamp (RFC 3339) |
+| `start_time_tbd` | boolean | yes | `true` when only the day of `start_date` is set and its time is a placeholder |
 | `end_date` | string | no | UTC timestamp (RFC 3339) |
 | `status` | string | yes | See status values below |
 | `event_type` | string | no | Kind of event — discipline-specific |

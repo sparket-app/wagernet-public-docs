@@ -233,6 +233,7 @@ polls, and read the market's odds history for every move in between.
   "id": "064368f9-...",
   "name": "Philadelphia Eagles vs Chicago Bears",
   "start_date": "2026-09-29T00:15:00Z",
+  "start_time_tbd": false,
   "status": "upcoming",
   "event_type": "match",
   "espn_id": "401872963",
