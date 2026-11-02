@@ -127,7 +127,7 @@ Where a draw is possible — soccer, for example — the moneyline has a third `
 
 Not all events have markets. Some data sources provide events without odds, in which case `markets` will be an empty array.
 
-**A market can exist before it is priced.** The moneyline is often created with the event, and its selections then carry **no** `odds_decimal`, `odds_source` or `odds_source_kind` at all — the fields are omitted, not null. Around a fifth of upcoming soccer and college-football moneylines are in this state at any time, because books post those lines only days ahead. Treat "the market exists" and "the market has a price" as two different states, and expect missing keys rather than nulls. Spread and totals markets are usually absent entirely until priced, so the number of markets on an event varies.
+**A market can exist before it is priced.** The moneyline is often created with the event, and its selections then carry **no** `odds_decimal`, `odds_source` or `odds_source_kind` at all — the fields are omitted, not null. Around a fifth of upcoming soccer and college-football moneylines are in this state at any time, and most college-basketball moneylines more than a couple of days out, because books post those lines only days ahead. Treat "the market exists" and "the market has a price" as two different states, and expect missing keys rather than nulls. Spread and totals markets are usually absent entirely until priced, so the number of markets on an event varies.
 
 ### Selections
 
