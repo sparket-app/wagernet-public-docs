@@ -300,7 +300,9 @@ keep `result: null`.
 
 - Every draw in progress is re-read and repriced about every 5 minutes, whole bracket each
   time — so a corrected start time, a new score or a settled market lands within a few
-  minutes.
+  minutes. A draw stays in that cycle until its last match is settled, including a final
+  that ends after the tournament's last day.
+- A match the tour removes from the bracket is set to `cancelled` and its markets voided.
 - The tour calendar is re-read about twice a day, which is when a newly published draw
   becomes a competition and a season.
 - The tour rankings that `tennis-model` prices from are published weekly and checked daily.
