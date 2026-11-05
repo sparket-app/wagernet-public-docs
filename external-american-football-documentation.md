@@ -116,6 +116,11 @@ spaces overlap:
 appeared in an imported game, not from a league roster — so the college list is larger than
 the top-division field, because lower-division opponents get added when they play one.
 
+College teams also belong to a conference. `GET /api/v1/competitions/ncaaf/conferences` lists
+them, and `/events?competition_uri=ncaaf&conference_uri=sec` keeps the games with an SEC team
+in them. `/events?competition_uri=ncaaf&ranked=true` keeps the games with a team in the AP Top
+25 that was in force at kick-off; the poll is refreshed daily.
+
 ---
 
 ## Markets

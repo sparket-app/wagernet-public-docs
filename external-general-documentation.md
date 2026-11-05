@@ -183,10 +183,11 @@ Walk the hierarchy top-down to discover what's available:
 GET /api/v1/disciplines                          → list all disciplines
 GET /api/v1/disciplines/{uri}/competitions       → competitions in a discipline
 GET /api/v1/competitions/{uri}/seasons           → seasons in a competition
+GET /api/v1/competitions/{uri}/conferences       → conferences in a competition (college sports)
 GET /api/v1/seasons/{uri}/stages                 → stages in a season
 ```
 
-Each response wraps results in a named array: `{ "disciplines": [...] }`, `{ "competitions": [...] }`, `{ "seasons": [...] }`, `{ "stages": [...] }`.
+Each response wraps results in a named array: `{ "disciplines": [...] }`, `{ "competitions": [...] }`, `{ "seasons": [...] }`, `{ "conferences": [...] }`, `{ "stages": [...] }`. Conferences exist for college football (`ncaaf`) and men's college basketball (`ncaab`); every other competition answers an empty list.
 
 All objects have a stable `uri` field used as the identifier in URL paths.
 
@@ -211,6 +212,8 @@ GET /api/v1/events/{id}             → single event with full details
 | `name_like` | Partial event name, case-insensitive | `Dodgers` |
 | `start_date_from` | Events starting from this time (RFC 3339) | `2026-09-10T00:00:00Z` |
 | `start_date_to` | Events starting before this time (RFC 3339) | `2026-09-17T00:00:00Z` |
+| `conference_uri` | Events with a competitor in this conference, by the uri `/competitions/{uri}/conferences` lists (college sports) | `sec` |
+| `ranked` | `true` keeps events with a competitor in the AP Top 25 in force at the event's start. Needs `competition_uri`; `ncaaf` and `ncaab` only | `true` |
 | `include_historical` | Also return selections no longer offered | `true` |
 | `sort` | `field:direction`, comma-separated. Fields: `start_date`, `end_date`, `name`, `status` | `start_date:asc` |
 | `page` | Page number, starting at 1 | `2` |
@@ -341,6 +344,16 @@ selections are voided.
 | `name` | string | Display name |
 | `country` | string | Country code (e.g. `US`) |
 | `discipline_uri` | string | Parent discipline URI |
+
+### Conference
+
+A grouping of a competition's teams, recorded on college teams only.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `uri` | string | Stable identifier, the short name slugged (`sec`, `big-ten`); what `conference_uri` on `/events` takes |
+| `name` | string | Full name (`Southeastern Conference`) |
+| `short_name` | string | Short name (`SEC`) |
 
 ### Season
 
