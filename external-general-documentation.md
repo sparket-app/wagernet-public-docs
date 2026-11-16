@@ -105,6 +105,7 @@ Entities also have an optional `discipline_uri` field that indicates which disci
 A **competitor** is an entity participating in a specific event. Each competitor has:
 - `entity` — the entity object (team, player, pair, party or candidate)
 - `role` — their position in the event, typically `home` or `away`. Where home/away doesn't apply — a race, an election, a multi-way field — the role is `competitor` or `participant`.
+- `ranking` — on a ranked college team, its place in the AP Top 25 in force at the event's start. Omitted for an unranked team and for every competition without a poll (`ncaaf`, `ncaab` and `ncaaw` have one).
 
 The entity type of competitors varies by event type. For example, a game-day event might have `team` competitors, while an individual match might have `pair` or `player` competitors. See discipline-specific docs for details.
 
@@ -397,6 +398,7 @@ A grouping of a competition's teams, recorded on college teams only.
 |-------|------|-------------|
 | `entity` | Entity | The competing entity |
 | `role` | string | Optional — `home`, `away`, `competitor`, or `participant` |
+| `ranking` | integer | Optional — place in the AP Top 25 in force at the event's start; ranked college teams only |
 
 ### Market
 
