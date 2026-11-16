@@ -187,7 +187,7 @@ GET /api/v1/competitions/{uri}/conferences       → conferences in a competitio
 GET /api/v1/seasons/{uri}/stages                 → stages in a season
 ```
 
-Each response wraps results in a named array: `{ "disciplines": [...] }`, `{ "competitions": [...] }`, `{ "seasons": [...] }`, `{ "conferences": [...] }`, `{ "stages": [...] }`. Conferences exist for college football (`ncaaf`) and men's college basketball (`ncaab`); every other competition answers an empty list.
+Each response wraps results in a named array: `{ "disciplines": [...] }`, `{ "competitions": [...] }`, `{ "seasons": [...] }`, `{ "conferences": [...] }`, `{ "stages": [...] }`. Conferences exist for college football (`ncaaf`), men's college basketball (`ncaab`) and women's college basketball (`ncaaw`); every other competition answers an empty list.
 
 All objects have a stable `uri` field used as the identifier in URL paths.
 
@@ -213,7 +213,7 @@ GET /api/v1/events/{id}             → single event with full details
 | `start_date_from` | Events starting from this time (RFC 3339) | `2026-09-10T00:00:00Z` |
 | `start_date_to` | Events starting before this time (RFC 3339) | `2026-09-17T00:00:00Z` |
 | `conference_uri` | Events with a competitor in this conference, by the uri `/competitions/{uri}/conferences` lists (college sports) | `sec` |
-| `ranked` | `true` keeps events with a competitor in the AP Top 25 in force at the event's start. Needs `competition_uri`; `ncaaf` and `ncaab` only | `true` |
+| `ranked` | `true` keeps events with a competitor in the AP Top 25 in force at the event's start. Needs `competition_uri`; `ncaaf`, `ncaab` and `ncaaw` only | `true` |
 | `include_historical` | Also return selections no longer offered | `true` |
 | `sort` | `field:direction`, comma-separated. Fields: `start_date`, `end_date`, `name`, `status` | `start_date:asc` |
 | `page` | Page number, starting at 1 | `2` |
