@@ -67,7 +67,7 @@ In tennis a competition is one **draw**, not one tournament, and the list grows 
 
 An **event** is anything you can bet on — a game, a match, a race, a performance. Events always belong to a season, and optionally to a stage within that season.
 
-Each event has an `event_type` field describing what it is. The values depend on the discipline — team sports and tennis use `match`, elections use `election`, ranking markets use `ranking`, and jai-alai and pickleball use `performance` (a game day) alongside `match` (one match within it). It can also be absent, as it is on placeholder playoff games that may never be played.
+Each event has an `event_type` field describing what it is. The values depend on the discipline — team sports and tennis use `match`, a season's title race uses `championship`, elections use `election`, ranking markets use `ranking`, and jai-alai and pickleball use `performance` (a game day) alongside `match` (one match within it). It can also be absent, as it is on placeholder playoff games that may never be played.
 
 `start_date` can be absent too, on an event whose slot exists before it is scheduled. Where it is present, treat it as the scheduled time rather than a firm one: in sports played back-to-back on the same court, every match of an unscheduled round can share a single placeholder timestamp.
 

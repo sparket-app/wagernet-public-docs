@@ -12,6 +12,7 @@ See [General Documentation](external-general-documentation.md) for general Wager
 Discipline: american-football
 ├── Competition: nfl        (NFL)
 │   └── Season: nfl-2026
+│       ├── Event (event_type=championship)   NFL 2026 Champion, no stage
 │       ├── Stage: Preseason Week 1   (stage_type: preseason, stage_number: -3)
 │       ├── Stage: Week 1             (regular, 1)
 │       └── Stage: Super Bowl         (superbowl, 22)
@@ -26,7 +27,8 @@ Discipline: american-football
 - **Competition** = `nfl` or `ncaaf`, both with `country: "US"`.
 - **Season** = one year, `nfl-2026` / `ncaaf-2026`.
 - **Stage** = one week or one postseason round.
-- **Event** = one game. Events are flat: no `parent_event_id`, no `child_events`.
+- **Event** = one game, or one title race (see Championship Events). Events are flat: no
+  `parent_event_id`, no `child_events`.
 
 ### Stages and their ordering
 
@@ -167,9 +169,31 @@ own settled `result`. Pass `include_historical=true` to see them, and filter odd
 
 ---
 
+## Championship Events
+
+A title race is an event of its own: `event_type: "championship"`, named after its season
+(`NFL 2026 Champion`), filed in the season with no stage. Its contenders are every team, each
+with `role: "competitor"`, and it carries one `moneyline` market with a selection per team.
+It is not the Super Bowl game, which stays a `match` between the two finalists.
+
+- **Dates:** `start_date` is the start of the season, `end_date` the day the title is
+  expected to be decided. Neither is a kickoff.
+- **Status:** `live` through the season, `completed` once the winner is known.
+- **Prices:** `odds_source: "kalshi"`, `odds_source_kind: "exchange"`, from the Kalshi
+  exchange's bid/ask midpoint. They are not normalised, so a field's implied probabilities
+  sum to somewhat more than 1.
+- **Eliminated teams** stay in the market as `is_current: false` selections with no price,
+  hidden unless you pass `include_historical=true`.
+- **Settlement:** the winner gets `placement: 1` and its selection `won`; every other team
+  `placement: 2` and `lost`.
+- **Metadata:** unlike games, a title race carries `metadata` with the exchange's
+  `kalshi_series_ticker`.
+
+---
+
 ## Event Metadata
 
-American football events carry **no `metadata`** — the field is absent. Only `espn_id` is
+American football games carry **no `metadata`** — the field is absent. Only `espn_id` is
 published as a cross-provider key.
 
 ---
